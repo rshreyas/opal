@@ -85,7 +85,16 @@ def vw_class_to_taxid(inputfile, dicofile, outputfile):
     predout = open(outputfile, "w")
     with open(inputfile, "r") as fin:
         for line in fin:
-            predout.write("%s\n"%(dico[str(int(float(line.strip())))]))
+            #predout.write("%s\n"%(dico[str(int(float(line.strip())))]))
+            pred_classes_with_prob = line.strip().split()
+            pred_txid_with_prob = []
+
+            for vw_id_prob_pair in pred_classes_with_prob:
+                vw_id, prob_est = vw_id_prob_pair.split(':')
+                tx_id = dico[str(int(float(vw_id)))]
+                tx_id_prob_pair = tx_id + ":" + prob_est
+                pred_txid_with_prob.append(tx_id_prob_pair)
+            predout.write("%s\n"%(str(' '.join(pred_txid_with_prob))))
     predout.close()
 
 def get_fasta_and_taxid(directory):
@@ -449,6 +458,7 @@ reverse-complements: {reverse}
     # get vw predictions
     vw_param_list = ["vw", "-t",
         "-i", model,
+        "--probabilities",
         "-p", prefix + ".preds.vw"]
     vwps_training_log = prefix + "_vwps.log"
     vwps_log_fh_write = open(vwps_training_log, 'w')
