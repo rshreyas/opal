@@ -75,7 +75,7 @@ def extract_column_two(infile, outfile):
                     print('',file=outf)
 
 def vw_class_to_taxid(inputfile, dicofile, outputfile):
-    '''Converts vw IDs in a newline delimited list (inputfile) to 
+    '''Converts vw IDs in a newline delimited list (inputfile) to
     outputfile using the mapping specified in dicofile'''
     dico = {}
     with open(dicofile, "r") as fin:
@@ -84,17 +84,26 @@ def vw_class_to_taxid(inputfile, dicofile, outputfile):
             dico[vwid] = txid
     predout = open(outputfile, "w")
     with open(inputfile, "r") as fin:
-        for line in fin:
-            #predout.write("%s\n"%(dico[str(int(float(line.strip())))]))
+        for line_number, line in enumerate(fin):
             pred_classes_with_prob = line.strip().split()
-            pred_txid_with_prob = []
+            pred_prob_list = []
+
+            if line_number == 0:
+                # Get all TAXIDs in sequence
+                tax_id_list = []
+                for vw_id_prob_pair in pred_classes_with_prob:
+                    vw_id, prob_est = vw_id_prob_pair.split(':')
+                    tx_id = dico[str(int(float(vw_id)))]
+                    tax_id_list.append(tx_id)
+                predout.write("%s\n"%(str('\t'.join(tax_id_list))))
 
             for vw_id_prob_pair in pred_classes_with_prob:
                 vw_id, prob_est = vw_id_prob_pair.split(':')
-                tx_id = dico[str(int(float(vw_id)))]
-                tx_id_prob_pair = tx_id + ":" + prob_est
-                pred_txid_with_prob.append(tx_id_prob_pair)
-            predout.write("%s\n"%(str(' '.join(pred_txid_with_prob))))
+                #tx_id = dico[str(int(float(vw_id)))]
+                pred_prob_list.append(prob_est)
+
+            #predout.write("%s\n"%(dico[str(int(float(line.strip())))]))
+            predout.write("%s\n"%(str('\t'.join(pred_prob_list))))
     predout.close()
 
 def get_fasta_and_taxid(directory):
@@ -144,7 +153,7 @@ def evaluate_predictions(reffile, predfile):
     #recall = recall_score(ref, pred, average='micro')
     #print("precision = {:.4f}".format(precision))
     #print("recall    = {:.4f}".format(recall))
-    
+
     sys.stdout.flush()
 
 
@@ -152,7 +161,7 @@ def frag(test_dir, frag_dir, args):
     '''Draws fragments from the fasta file found in test_dir. Note that
     there must be a taxid file of the same basename with matching ids for
     each of the fasta lines.
-    
+
     test_dir (string):  must be a path to a directory with a single fasta
                         and taxid file
     frag_dir (string):  must be a path to an output directory
@@ -219,7 +228,7 @@ def train(ref_dir, model_dir, args):
     '''Draws fragments from the fasta file found in ref_dir. Note that
     there must be a taxid file of the same basename with matching ids for
     each of the fasta lines.
-    
+
     ref_dir (string):   must be a path to a directory with a single fasta
                         and taxid file
     model_dir (string): must be a path to an output directory
@@ -303,7 +312,7 @@ taxids input:   {taxids}
 
     # define output "dictionary" : taxid <--> vw classes
     dico = os.path.join(model_dir, "vw-dico.txt")
-    
+
     # define model prefix
     model_prefix = os.path.join(model_dir, "vw-model")
 
@@ -403,7 +412,7 @@ def predict(model_dir, test_dir, predict_dir, args):
     '''Draws fragments from the fasta file found in data_dir. Note that
     there must be a taxid file of the same basename with matching ids for
     each of the fasta lines.
-    
+
     ref_dir (string):   must be a path to a directory with a single fasta
                         and taxid file
     model_dir (string): must be a path to a directory with a vw model file
@@ -657,4 +666,3 @@ ranges''', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
